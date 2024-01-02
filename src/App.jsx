@@ -1,10 +1,12 @@
 import React from 'react'
-import Header from './Component/Header'
+import AppContainer from './Component/AppContainer'
 
 const App = () => {
   return (
     <>
-      <Header />
+      <div className="app">
+        <AppContainer />
+      </div>
     </>
     
   )
