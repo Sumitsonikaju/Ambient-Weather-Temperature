@@ -24,12 +24,14 @@ const AppContainer = () => {
     minutes: 0,
     months: 0,
   });
-  //   let city = useRef(null);
 
   const [city, setCity] = useState("");
   const [temperatureData, setTemperatureData] = useState([]);
   const [HoursData, setHoursData] = useState([]);
   const [weekData, setWeekData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+
   const weekDays = [
     "Sunday",
     "Monday",
@@ -39,6 +41,7 @@ const AppContainer = () => {
     "Friday",
     "Saturday",
   ];
+
   const Months = [
     "Jan",
     "Feb",
@@ -63,6 +66,19 @@ const AppContainer = () => {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    // Fetch user's geolocation on page load
+    fetchGeolocation();
+  }, []);
+
+  useEffect(() => {
+    // Fetch weather data when city changes
+    if (city) {
+      fetchWeatherData();
+      getHourlyData();
+    }
+  }, [city]); 
+
   const fetchTimeData = () => {
     let timeData = new Date();
     let hours = timeData.getHours();
@@ -79,28 +95,86 @@ const AppContainer = () => {
   };
 
   const fetchWeatherData = async () => {
-    const data = await fetch(
-      `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
-    );
-    const json = await data.json();
-    setTemperatureData(json);
+    try {
+      const data = await fetch(
+        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
+      );
+      const json = await data.json();
+      setTemperatureData(json);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching weather data:", error);
+      setLoading(false);
+    }
   };
 
+
   const getHourlyData = async () => {
-    const data = await fetch(
-      `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
-    );
-    const json = await data.json();
-    setHoursData(json?.days[0]?.hours);
+    try {
+      const data = await fetch(
+        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
+      );
+      const json = await data.json();
+      setHoursData(json?.days[0]?.hours);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching hourly data:", error);
+      setLoading(false);
+    }
   };
 
   const handleWeekData = async () => {
-    const data = await fetch(
+    try {
+      const data = await fetch(
         `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
       );
       const json = await data.json();
       setWeekData(json?.days);
-  }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching weekly data:", error);
+      setLoading(false);
+    }
+  };
+
+
+  const fetchGeolocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        await fetchCityByGeolocation(latitude, longitude);
+      },
+      (error) => {
+        console.error("Error getting geolocation:", error);
+        setLoading(false);
+      }
+    );
+  };
+
+
+  const fetchCityByGeolocation = async (latitude, longitude) => {
+    const apiKey = "bdaab72aca5a4ed5b63d065a7630a315";
+    const apiUrl = `https://api.opencagedata.com/geocode/v1/json?key=${apiKey}&q=${latitude}+${longitude}`;
+
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      if (data.results && data.results.length > 0) {
+        const cityName = data.results[0].components.village || "";
+        setCity(cityName);
+        
+      } else {
+        console.error("Unable to fetch city name from geolocation data");
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Error fetching city name:", error);
+      setLoading(false);
+    }
+  };
+
+
 
   // chart js
 
@@ -155,7 +229,7 @@ const AppContainer = () => {
     "11:00",
     "12:00",
   ];
-  const batteryData = [10,20,3,40,50,55,10,9,40,50,0,9,6,11,23,45]
+  const batteryData = [10,20,20 ,40,50,55,10,9,40,50,0,9,6,11,23,45]
 
   const data = {
     labels: HoursData?.map((hour) => hour.datetime) || weekData?.map((week) => week.datetime),
