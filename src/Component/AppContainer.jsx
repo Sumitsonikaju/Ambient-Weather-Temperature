@@ -11,12 +11,16 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
+  PointElement,
+  LineElement,
   BarElement,
   Title,
   Tooltip,
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
+import { Line } from 'react-chartjs-2';
+
 
 const AppContainer = () => {
   const [timeData, setTimeData] = useState({
@@ -30,7 +34,9 @@ const AppContainer = () => {
   const [temperatureData, setTemperatureData] = useState([]);
   const [HoursData, setHoursData] = useState([]);
   const [weekData, setWeekData] = useState([]);
-  const [mode, setMode] = useState('today');
+  const [mode, setMode] = useState("today");
+  const [modeChart, setModeChart] = useState("line");
+
   const [loading, setLoading] = useState(true);
 
   const weekDays = [
@@ -124,27 +130,26 @@ const AppContainer = () => {
   };
 
   const handleWeekData = async () => {
-  try {
-    const data = await fetch(
-      `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
-    );
-    const json = await data.json();
+    try {
+      const data = await fetch(
+        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
+      );
+      const json = await data.json();
 
-    // Filter data for the next 7 days
-    const currentDate = new Date();
-    const next7DaysData = json?.days.filter((day) => {
-      const dayDate = new Date(day.datetime);
-      return dayDate >= currentDate && dayDate <= addDays(currentDate, 7);
-    });
+      // Filter data for the next 7 days
+      const currentDate = new Date();
+      const next7DaysData = json?.days.filter((day) => {
+        const dayDate = new Date(day.datetime);
+        return dayDate >= currentDate && dayDate <= addDays(currentDate, 7);
+      });
 
-    setWeekData(next7DaysData);
-    setLoading(false);
-  } catch (error) {
-    console.error("Error fetching weekly data:", error);
-    setLoading(false);
-  }
-};
-
+      setWeekData(next7DaysData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching weekly data:", error);
+      setLoading(false);
+    }
+  };
 
   const fetchGeolocation = () => {
     navigator.geolocation.getCurrentPosition(
@@ -182,9 +187,13 @@ const AppContainer = () => {
 
   // chart js
 
+  
+
   ChartJS.register(
     CategoryScale,
     LinearScale,
+    PointElement,
+    LineElement,
     BarElement,
     Title,
     Tooltip,
@@ -233,7 +242,10 @@ const AppContainer = () => {
     "11:00",
     "12:00",
   ];
-  const batteryDataHour = [10, 20, 20, 40, 50, 55, 10, 9, 40, 50, 5, 9, 6, 11, 23, 45, 15, 25, 30, 35, 45, 50, 15, 10];
+  const batteryDataHour = [
+    10, 20, 20, 40, 50, 55, 10, 9, 40, 50, 5, 9, 6, 11, 23, 45, 15, 25, 30, 35,
+    45, 50, 15, 10,
+  ];
   const batteryDataDay = [10, 20, 20, 40, 50, 55, 10, 9];
 
   const data = {
@@ -252,10 +264,10 @@ const AppContainer = () => {
       },
       {
         label: "Battery",
-        data: 
-        mode === "today"
-        ? batteryDataHour.map((items) => items)
-        : batteryDataDay.map((items) => items),
+        data:
+          mode === "today"
+            ? batteryDataHour.map((items) => items)
+            : batteryDataDay.map((items) => items),
         backgroundColor: "rgba(53, 162, 235, 0.5)",
       },
     ],
@@ -313,7 +325,7 @@ const AppContainer = () => {
                 </>
               )}
             </div>
-            <div className="right  py-4 px-10 bg-[#eaeaea]  w-[48rem]">
+            <div className="right  py-4 px-10 bg-[#eaeaea] rounded-r-lg w-[48rem]">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-4">
                   <div
@@ -338,6 +350,31 @@ const AppContainer = () => {
                   >
                     Week
                   </div>
+
+
+                        {/* Chart Mode changer */}
+                  <div
+                    onClick={() => {
+                      getHourlyData();
+                      setModeChart("line");
+                    }}
+                    className={`cursor-pointer font-bold ${
+                      modeChart === "line" ? "active" : ""
+                    }`}
+                  >
+                    LineChart
+                  </div>
+                  <div
+                    onClick={() => {
+                      handleWeekData();
+                      setModeChart("bar");
+                    }}
+                    className={`cursor-pointer font-bold ${
+                      modeChart === "bar" ? "active" : ""
+                    }`}
+                  >
+                    BarChart
+                  </div>
                 </div>
 
                 <div className="flex items-center space-x-4">
@@ -351,8 +388,14 @@ const AppContainer = () => {
                     weather check today by clicking today.......
                   </h1>
                 ) : (
-                  <div className="mt-10 w-[40rem] h-[45vh] ">
-                    <Bar options={options} data={data} />
+                  <div className="mt-10 w-[40rem] h-[45vh] ">{
+                    modeChart === "bar" ?(
+                        <Bar options={options} data={data} />
+                    ) : (
+                        <Line options={options} data={data} />
+                    )
+                  }
+                    
                   </div>
                 )}
               </div>
