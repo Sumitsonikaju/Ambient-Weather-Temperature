@@ -19,8 +19,7 @@ import {
   Legend,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { Line } from 'react-chartjs-2';
-
+import { Line } from "react-chartjs-2";
 
 const AppContainer = () => {
   const [timeData, setTimeData] = useState({
@@ -100,11 +99,11 @@ const AppContainer = () => {
       months,
     });
   };
-
+  const keyAPI = "9KRCXLHY9WWRD7X5P24YKT6YE";
   const fetchWeatherData = async () => {
     try {
       const data = await fetch(
-        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
+        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=${keyAPI}`
       );
       const json = await data.json();
       setTemperatureData(json);
@@ -118,7 +117,7 @@ const AppContainer = () => {
   const getHourlyData = async () => {
     try {
       const data = await fetch(
-        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
+        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=${keyAPI}`
       );
       const json = await data.json();
       setHoursData(json?.days[0]?.hours);
@@ -132,7 +131,7 @@ const AppContainer = () => {
   const handleWeekData = async () => {
     try {
       const data = await fetch(
-        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
+        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=${keyAPI}`
       );
       const json = await data.json();
 
@@ -186,8 +185,6 @@ const AppContainer = () => {
   };
 
   // chart js
-
-  
 
   ChartJS.register(
     CategoryScale,
@@ -351,8 +348,7 @@ const AppContainer = () => {
                     Week
                   </div>
 
-
-                        {/* Chart Mode changer */}
+                  {/* Chart Mode changer */}
                   <div
                     onClick={() => {
                       getHourlyData();
@@ -388,14 +384,12 @@ const AppContainer = () => {
                     weather check today by clicking today.......
                   </h1>
                 ) : (
-                  <div className="mt-10 w-[40rem] h-[45vh] ">{
-                    modeChart === "bar" ?(
-                        <Bar options={options} data={data} />
+                  <div className="mt-10 w-[40rem] h-[45vh] ">
+                    {modeChart === "bar" ? (
+                      <Bar options={options} data={data} />
                     ) : (
-                        <Line options={options} data={data} />
-                    )
-                  }
-                    
+                      <Line options={options} data={data} />
+                    )}
                   </div>
                 )}
               </div>
