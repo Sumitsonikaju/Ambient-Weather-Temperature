@@ -134,7 +134,7 @@ const AppContainer = () => {
     // Add more conditions and corresponding local paths as needed
   };
   
-  const keyAPI = "PSG8SS4V2ZZ5VZXNUPG8A6JHC"; //9KRCXLHY9WWRD7X5P24YKT6YE //XDWJFZB6HG23BACTTRDN2GXG8 //PSG8SS4V2ZZ5VZXNUPG8A6JHC
+  const keyAPI = "PPKBBJ7637X5SNDUG6HZA23X7"; //9KRCXLHY9WWRD7X5P24YKT6YE //XDWJFZB6HG23BACTTRDN2GXG8 //PSG8SS4V2ZZ5VZXNUPG8A6JHC
   const fetchWeatherData = async () => {
     try {
       const data = await fetch(
