@@ -5,6 +5,7 @@ import { TbTemperatureFahrenheit } from "react-icons/tb";
 import logo1 from "../Assets/rain-water-drops.jpg";
 import { FaLocationDot } from "react-icons/fa6";
 import { FaCloud } from "react-icons/fa";
+import { format, startOfWeek, addDays } from "date-fns";
 
 import {
   Chart as ChartJS,
@@ -29,8 +30,8 @@ const AppContainer = () => {
   const [temperatureData, setTemperatureData] = useState([]);
   const [HoursData, setHoursData] = useState([]);
   const [weekData, setWeekData] = useState([]);
+  const [mode, setMode] = useState('today');
   const [loading, setLoading] = useState(true);
-
 
   const weekDays = [
     "Sunday",
@@ -77,7 +78,7 @@ const AppContainer = () => {
       fetchWeatherData();
       getHourlyData();
     }
-  }, [city]); 
+  }, [city]);
 
   const fetchTimeData = () => {
     let timeData = new Date();
@@ -108,7 +109,6 @@ const AppContainer = () => {
     }
   };
 
-
   const getHourlyData = async () => {
     try {
       const data = await fetch(
@@ -124,18 +124,26 @@ const AppContainer = () => {
   };
 
   const handleWeekData = async () => {
-    try {
-      const data = await fetch(
-        `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
-      );
-      const json = await data.json();
-      setWeekData(json?.days);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching weekly data:", error);
-      setLoading(false);
-    }
-  };
+  try {
+    const data = await fetch(
+      `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=PSG8SS4V2ZZ5VZXNUPG8A6JHC`
+    );
+    const json = await data.json();
+
+    // Filter data for the next 7 days
+    const currentDate = new Date();
+    const next7DaysData = json?.days.filter((day) => {
+      const dayDate = new Date(day.datetime);
+      return dayDate >= currentDate && dayDate <= addDays(currentDate, 7);
+    });
+
+    setWeekData(next7DaysData);
+    setLoading(false);
+  } catch (error) {
+    console.error("Error fetching weekly data:", error);
+    setLoading(false);
+  }
+};
 
 
   const fetchGeolocation = () => {
@@ -151,7 +159,6 @@ const AppContainer = () => {
     );
   };
 
-
   const fetchCityByGeolocation = async (latitude, longitude) => {
     const apiKey = "bdaab72aca5a4ed5b63d065a7630a315";
     const apiUrl = `https://api.opencagedata.com/geocode/v1/json?key=${apiKey}&q=${latitude}+${longitude}`;
@@ -163,7 +170,6 @@ const AppContainer = () => {
       if (data.results && data.results.length > 0) {
         const cityName = data.results[0].components.village || "";
         setCity(cityName);
-        
       } else {
         console.error("Unable to fetch city name from geolocation data");
         setLoading(false);
@@ -173,8 +179,6 @@ const AppContainer = () => {
       setLoading(false);
     }
   };
-
-
 
   // chart js
 
@@ -229,19 +233,29 @@ const AppContainer = () => {
     "11:00",
     "12:00",
   ];
-  const batteryData = [10,20,20 ,40,50,55,10,9,40,50,0,9,6,11,23,45]
+  const batteryDataHour = [10, 20, 20, 40, 50, 55, 10, 9, 40, 50, 5, 9, 6, 11, 23, 45, 15, 25, 30, 35, 45, 50, 15, 10];
+  const batteryDataDay = [10, 20, 20, 40, 50, 55, 10, 9];
 
   const data = {
-    labels: HoursData?.map((hour) => hour.datetime) || weekData?.map((week) => week.datetime),
+    labels:
+      mode === "today"
+        ? HoursData?.map((hour) => hour.datetime)
+        : weekData?.map((day) => weekDays[new Date(day.datetime).getDay()]),
     datasets: [
       {
         label: "Temperature in Celsius",
-        data: HoursData?.map((hour) => Math.ceil(((hour.temp - 32) * 5) / 9)),
+        data:
+          mode === "today"
+            ? HoursData?.map((hour) => Math.ceil(((hour.temp - 32) * 5) / 9))
+            : weekData?.map((day) => Math.ceil(((day.temp - 32) * 5) / 9)),
         backgroundColor: "rgba(255, 99, 132, 0.5)",
       },
       {
         label: "Battery",
-        data: batteryData.map((items) => items),
+        data: 
+        mode === "today"
+        ? batteryDataHour.map((items) => items)
+        : batteryDataDay.map((items) => items),
         backgroundColor: "rgba(53, 162, 235, 0.5)",
       },
     ],
@@ -267,7 +281,9 @@ const AppContainer = () => {
                 />
               </div>
               {temperatureData.length === 0 ? (
-                <h1 className="flex justify-center items-center h-[60vh] ">Search city Weather...😁</h1>
+                <h1 className="flex justify-center items-center h-[60vh] ">
+                  Search city Weather...😁
+                </h1>
               ) : (
                 <>
                   <img className="w-[100px] mx-auto mt-10" src={logo1} alt="" />
@@ -301,20 +317,40 @@ const AppContainer = () => {
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-4">
                   <div
-                    onClick={() => getHourlyData()}
-                    className="cursor-pointer font-bold"
+                    onClick={() => {
+                      getHourlyData();
+                      setMode("today");
+                    }}
+                    className={`cursor-pointer font-bold ${
+                      mode === "today" ? "active" : ""
+                    }`}
                   >
                     Today
                   </div>
-                  <div onClick={() => handleWeekData()} className="cursor-pointer font-bold">Week</div>
+                  <div
+                    onClick={() => {
+                      handleWeekData();
+                      setMode("week");
+                    }}
+                    className={`cursor-pointer font-bold ${
+                      mode === "week" ? "active" : ""
+                    }`}
+                  >
+                    Week
+                  </div>
                 </div>
+
                 <div className="flex items-center space-x-4">
                   <TbTemperatureCelsius />
                   <TbTemperatureFahrenheit />
                 </div>
               </div>
               <div className="mt-10 ">
-                {HoursData.length === 0 ? <h1 className="flex justify-center items-center h-[50vh]">weather check today by clicking today.......</h1> :  (
+                {HoursData.length === 0 ? (
+                  <h1 className="flex justify-center items-center h-[50vh]">
+                    weather check today by clicking today.......
+                  </h1>
+                ) : (
                   <div className="mt-10 w-[40rem] h-[45vh] ">
                     <Bar options={options} data={data} />
                   </div>
