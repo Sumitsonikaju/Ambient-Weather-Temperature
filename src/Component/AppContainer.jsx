@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { IoIosSearch } from "react-icons/io";
 import { TbTemperatureCelsius } from "react-icons/tb";
 import { TbTemperatureFahrenheit } from "react-icons/tb";
-import logo1 from "../Assets/rain-water-drops.jpg";
 import { FaLocationDot } from "react-icons/fa6";
 import { FaCloud } from "react-icons/fa";
 import { format, startOfWeek, addDays } from "date-fns";
@@ -30,6 +29,7 @@ const AppContainer = () => {
   });
 
   const [city, setCity] = useState("");
+  const [logoSrc, setLogoSrc] = useState(null);
   const [temperatureData, setTemperatureData] = useState([]);
   const [HoursData, setHoursData] = useState([]);
   const [weekData, setWeekData] = useState([]);
@@ -48,6 +48,19 @@ const AppContainer = () => {
     "Saturday",
   ];
 
+  const weatherIcons = {
+    "Clear": "../Assets/Clear.png",
+    "Cloudy": "../Assets/rain-sun.png",
+    "Rain": "../Assets/Rain.png",
+    "Drizzle": "../Assets/Drizzle.png",
+    "Mist": "../Assets/Mist.png",
+    "Snow": "../Assets/Snowflake.png",
+    "Partially cloudy": "../Assets/Partially_cloudy.png",
+    "Overcast": "../Assets/Overcast.png",
+
+    // Add more conditions and corresponding image URLs as needed
+  };
+
   const Months = [
     "Jan",
     "Feb",
@@ -62,6 +75,12 @@ const AppContainer = () => {
     "Nov",
     "Dec",
   ];
+
+  useEffect(() => {
+    // Dynamically import the logo based on temperature condition
+
+    importLogo();
+  }, [temperatureData?.currentConditions?.conditions]);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -99,18 +118,48 @@ const AppContainer = () => {
       months,
     });
   };
+  // Api Key for Weather Data
   const keyAPI = "9KRCXLHY9WWRD7X5P24YKT6YE";
+
   const fetchWeatherData = async () => {
     try {
       const data = await fetch(
         `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=${keyAPI}`
       );
+
+      if (!data.ok) {
+        throw new Error(`Bad Request: ${data.statusText}`);
+      }
+
       const json = await data.json();
       setTemperatureData(json);
+      importLogo();
       setLoading(false);
     } catch (error) {
       console.error("Error fetching weather data:", error);
       setLoading(false);
+      // Handle the error, e.g., display an error message to the user
+    }
+  };
+
+  const importLogo = async () => {
+    try {
+      const conditions = temperatureData?.currentConditions?.conditions;
+
+      if (conditions && weatherIcons.hasOwnProperty(conditions)) {
+        const logoPath = weatherIcons[conditions];
+        const logoModule = await import(logoPath);
+        setLogoSrc(logoModule.default);
+        console.log(logoSrc);
+        console.log(logoModule);
+        console.log(conditions);
+
+        
+
+
+      }
+    } catch (error) {
+      console.error("Error importing logo:", error);
     }
   };
 
@@ -119,12 +168,18 @@ const AppContainer = () => {
       const data = await fetch(
         `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=${keyAPI}`
       );
+
+      if (!data.ok) {
+        throw new Error(`Bad Request: ${data.statusText}`);
+      }
+
       const json = await data.json();
       setHoursData(json?.days[0]?.hours);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching hourly data:", error);
       setLoading(false);
+      // Handle the error, e.g., display an error message to the user
     }
   };
 
@@ -133,6 +188,11 @@ const AppContainer = () => {
       const data = await fetch(
         `https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?key=${keyAPI}`
       );
+
+      if (!data.ok) {
+        throw new Error(`Bad Request: ${data.statusText}`);
+      }
+
       const json = await data.json();
 
       // Filter data for the next 7 days
@@ -147,6 +207,7 @@ const AppContainer = () => {
     } catch (error) {
       console.error("Error fetching weekly data:", error);
       setLoading(false);
+      // Handle the error, e.g., display an error message to the user
     }
   };
 
@@ -295,7 +356,14 @@ const AppContainer = () => {
                 </h1>
               ) : (
                 <>
-                  <img className="w-[100px] mx-auto mt-10" src={logo1} alt="" />
+                  {/* Image LOGO */}
+                  {logoSrc && (
+                    <img
+                      className="w-[100px] mx-auto mt-10"
+                      src={logoSrc}
+                      alt={`Weather icon for ${temperatureData?.currentConditions?.conditions}`}
+                    />
+                  )}
                   <div className="mt-5 ">
                     <h1 className="text-4xl">
                       {Math.ceil(
