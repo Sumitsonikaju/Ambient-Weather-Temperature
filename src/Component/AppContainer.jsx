@@ -133,7 +133,7 @@ const AppContainer = () => {
 
     // Add more conditions and corresponding local paths as needed
   };
-  
+  // We can use any of the API 
   const keyAPI = "XDWJFZB6HG23BACTTRDN2GXG8"; //9KRCXLHY9WWRD7X5P24YKT6YE //XDWJFZB6HG23BACTTRDN2GXG8 //PSG8SS4V2ZZ5VZXNUPG8A6JHC
   const fetchWeatherData = async () => {
     try {
